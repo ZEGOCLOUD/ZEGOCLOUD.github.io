@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <link rel="stylesheet" media="screen" href="./index.css" />
+  </head>
+  <body>
+    <div class="user">
+      <div class="line">
+        <label>userID:</label>
+        <span id="userID">xxxx</span>
+      </div>
+      <div class="line">
+        <input
+          placeholder="Please enter roomID"
+          id="roomID"
+          title="Users with the same roomID can talk to each other"
+        /><button class="jonAsHost">jonAsHost</button>
+        <button class="jonAsAudience">jonAsAudience</button>
+      </div>
+    </div>
+    <div class="call" style="display: none; height: 100vh">
+      <ul class="userList"></ul>
+      <div class="user1">
+        <!-- <video controls></video> -->
+        <div class="publishHandler">
+          <button class="mic"></button>
+          <button class="hangup"></button>
+          <button class="camera"></button>
+        </div>
+      </div>
+      <div class="user2">
+        <!-- <video controls></video> -->
+      </div>
+    </div>
+    <div class="notify">
+      <div class="avatar">
+        <img
+          src="https://resource.zegocloud.com/easyExample/call_invite/5-avatar.a71855f3.png"
+        />
+        <div class="context">
+          <div class="title">test</div>
+          <div class="content">teststafsafs</div>
+        </div>
+      </div>
+      <div class="handler">
+        <button class="refuse"></button>
+        <button class="accept"></button>
+      </div>
+    </div>
+  </body>
+  <!-- <script src="./crypto-js.js"></script>
+  <script src="./token.js"></script> -->
+  <script src="./index.js"></script>
+</html>

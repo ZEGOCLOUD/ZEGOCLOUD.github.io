@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ZEGOCLOUD EasyExample Home</title>
+  </head>
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+    }
+    .user {
+      text-align: center;
+      border: 0px solid #ddd;
+      padding-top: 40vh;
+      color: #646a73;
+      font-size: 14px;
+    }
+    .line {
+      width: 300px;
+      margin: auto;
+      text-align: left;
+      margin-top: 30px;
+    }
+    .user button {
+      background-color: #007aff;
+      margin-left: 20px;
+      border: 0px;
+      height: 32px;
+      border-radius: 5%;
+      color: white;
+    }
+    .user input {
+      border: 0px;
+      border-bottom: 2px solid gray;
+      height: 32px;
+      width: 155px;
+    }
+    .notify {
+      position: fixed;
+      top: 10vh;
+      right: 5vh;
+      background-color: #0c0c0cb8;
+      height: 80px;
+      display: flex;
+      justify-content: space-between;
+      display: none;
+    }
+
+    .notify .avatar {
+      height: 100%;
+      color: aliceblue;
+      display: flex;
+    }
+    .notify .avatar img {
+      height: 50px;
+      width: 50px;
+      border-radius: 50%;
+      margin: 15px;
+    }
+    .notify .context {
+      margin: 10px;
+    }
+    .notify .title {
+      font-size: 22px;
+    }
+    .notify .content {
+      font-size: 12px;
+    }
+    .notify .handler {
+      display: flex;
+      width: 90px;
+      justify-content: space-between;
+      padding: 22px 10px;
+    }
+    .refuse {
+      background-image: url(./static/refuse.jpeg);
+      background-size: 159%;
+      background-position-x: -11px;
+      background-repeat: no-repeat;
+      background-position-y: -10px;
+      width: 36px;
+      height: 36px;
+      border: 0px;
+      border-radius: 50%;
+      margin-right: 10px;
+      margin-right: 10px;
+    }
+    .accept {
+      background-image: url(./static/accept.jpeg);
+      background-size: 219%;
+      background-position-x: -21px;
+      background-repeat: no-repeat;
+      background-position-y: -34px;
+      width: 36px;
+      height: 36px;
+      border: 0px;
+      border-radius: 50%;
+    }
+  </style>
+  <body>
+    <div class="user">
+      <div class="line">
+        <label>userID:</label>
+        <span id="userID">xxxx</span>
+      </div>
+      <div class="line">
+        <input
+          placeholder="Please enter target userID"
+          id="userID2"
+          title="The other user can receive offline messages after subscribing"
+        /><button onClick="goCall()">Call</button>
+      </div>
+    </div>
+
+    <div class="notify">
+      <div class="avatar">
+        <img
+          src="https://resource.zegocloud.com/easyExample/call_invite/5-avatar.a71855f3.png"
+        />
+        <div class="context">
+          <div class="title">test</div>
+          <div class="content">teststafsafs</div>
+        </div>
+      </div>
+      <div class="handler">
+        <button class="refuse" onclick="refuse()"></button>
+        <button class="accept" onclick="accept()"></button>
+      </div>
+    </div>
+  </body>
+  <script src="./ZegoExpressManager.js"></script>
+  <script>
+    var config = {
+      appID: 1719562607,
+      serverURL: "wss://webliveroom" + 1719562607 + "-api.zegocloud.com/ws",
+      tokenServerUrl: "https://easy-example-call.herokuapp.com",
+      targetRoomID: "",
+    };
+    async function checkRequirements() {
+      ZegoExpressManager.shared.createEngine(config.appID, config.serverURL);
+      var isSupportRTC = await ZegoExpressManager.shared.checkWebRTC();
+      var isCameraValid = await ZegoExpressManager.shared.checkCamera();
+      var isMicValid = await ZegoExpressManager.shared.checkMicrophone();
+      !isSupportRTC && alert("This browser does not support WebRTC");
+      !isCameraValid && alert("This browser camera unavailable");
+      !isMicValid && alert("This browser microphone unavailable");
+    }
+
+    var getUserID = function (len) {
+      let result = window.localStorage.getItem("userID") || "";
+      if (result) return result;
+      var chars =
+          "12345qwertyuiopasdfgh67890jklmnbvcxzMNBVCZXASDQWERTYHGFUIOLKJP",
+        maxPos = chars.length,
+        i;
+      len = len || 5;
+      for (i = 0; i < len; i++) {
+        result += chars.charAt(Math.floor(Math.random() * maxPos));
+      }
+      window.localStorage.setItem("userID", result);
+      return result;
+    };
+
+    window.onload = function () {
+      document.querySelector("#userID").innerHTML = getUserID(10);
+      checkRequirements();
+      subscribe();
+
+      if (location.search && location.search.indexOf("roomID") > -1) {
+        showNotify(
+          getQueryString("title"),
+          getQueryString("body"),
+          getQueryString("roomID")
+        );
+      }
+    };
+
+    function showNotify(title, body, roomID) {
+      document.querySelector(".title").innerHTML = title;
+      document.querySelector(".content").innerHTML = body;
+      document.querySelector(".notify").style.display = "flex";
+      config.targetRoomID = roomID;
+    }
+
+    function refuse() {
+      document.querySelector(".notify").style.display = "none";
+    }
+
+    function accept() {
+      // enter room
+      window.location.href =
+        "./call.html?roomID=" +
+        config.targetRoomID +
+        "&userID=" +
+        document.querySelector("#userID").innerHTML;
+    }
+
+    async function goCall() {
+      if (document.querySelector("#userID2").value) {
+        let res = await sendMessage();
+        if (res.ret === 0) {
+          window.location.href =
+            "./call.html?roomID=" +
+            document.querySelector("#userID").innerHTML +
+            "&userID=" +
+            document.querySelector("#userID").innerHTML;
+        } else {
+          alert("The call failed, please check the network and try again");
+        }
+      } else {
+        setTimeout(function () {
+          document.querySelector("#userID2").focus();
+        }, 500);
+      }
+    }
+
+    function getQueryString(name) {
+      var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+      var r = window.location.search.substr(1).match(reg);
+      if (r != null) return unescape(r[2]);
+      return null;
+    }
+  </script>
+
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.8.0/firebase-app.js";
+    import {
+      getMessaging,
+      onMessage,
+      getToken,
+    } from "https://www.gstatic.com/firebasejs/9.8.0/firebase-messaging.js";
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+      apiKey: "AIzaSyASiPspPxaPd-cwcLreUJ9JL5REprJd2To",
+      authDomain: "easyexample-7c37e.firebaseapp.com",
+      projectId: "easyexample-7c37e",
+      storageBucket: "easyexample-7c37e.appspot.com",
+      messagingSenderId: "17907117774",
+      appId: "1:17907117774:web:154c5b5a07a83208d4ea9f",
+      measurementId: "G-JK09KKQ2XW",
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const messaging = getMessaging(app);
+
+    // Handle incoming messages. Called when:
+    // - a message is received while the app has focus
+    // - the user clicks on an app notification created by a service worker
+    //   `messaging.onBackgroundMessage` handler.
+    onMessage(messaging, (payload) => {
+      console.warn("Message received. ", payload);
+
+      if (payload.data.targetUserID === getUserID(10)) {
+        showNotify(
+          payload.notification.title,
+          payload.notification.body,
+          payload.data.callerUserID
+        );
+      }
+    });
+
+    window.subscribe = function () {
+      getToken(messaging, {
+        vapidKey:
+          "BFexwH4yF5B9rDdfdEYpoBFAFntYi6omwh4x5FTnZ-CiB24uW2og3J9gRI0LwTDdEWKssnP5b1QDQBeP0xQnj9I",
+      })
+        .then((currentToken) => {
+          if (currentToken) {
+            sendTokenToMyServer(currentToken);
+          } else {
+            // Show permission request.
+            console.log(
+              "No registration token available. Request permission to generate one."
+            );
+            // Show permission UI.
+            requestPermission();
+          }
+        })
+        .catch((err) => {
+          console.error("An error occurred while retrieving token. ", err);
+        });
+    };
+
+    function sendTokenToMyServer(token) {
+      return fetch(`${config.tokenServerUrl}/store_fcm_token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userID: document.querySelector("#userID").innerHTML,
+          token,
+        }),
+      }).then((res) => {
+        console.log(res.json());
+      });
+    }
+
+    function requestPermission() {
+      console.log("Requesting permission...");
+      Notification.requestPermission().then((permission) => {
+        if (permission === "granted") {
+          console.log("Notification permission granted.");
+          // TODO(developer): Retrieve a registration token for use with FCM.
+          // In many cases once an app has been granted notification permission,
+          // it should update its UI reflecting this.
+          getToken();
+        } else {
+          console.log("Unable to get permission to notify.");
+        }
+      });
+    }
+
+    window.sendMessage = function () {
+      return fetch(`${config.tokenServerUrl}/call_invite`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          targetUserID: document.querySelector("#userID2").value,
+          callerUserID: document.querySelector("#userID").innerHTML,
+          callerUserName: document.querySelector("#userID").innerHTML,
+          callerIconUrl:
+            "https://resource.zegocloud.com/easyExample/call_invite/5-avatar.a71855f3.png",
+          roomID: document.querySelector("#userID").innerHTML,
+        }),
+      }).then((res) => res.json());
+    };
+  </script>
+</html>
